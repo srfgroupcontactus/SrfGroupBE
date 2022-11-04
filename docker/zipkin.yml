@@ -1,0 +1,15 @@
+version: '3.3'
+
+volumes:
+  postgres_data:
+    driver: local
+
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    # volumes:
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "9411:9411"

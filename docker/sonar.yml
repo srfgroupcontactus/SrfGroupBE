@@ -1,0 +1,10 @@
+# file: react.yml
+
+version: "3"
+
+services:
+  sonarqube:
+    image: sonarqube:8.8-community
+    ports:
+      - "9000:9000"
+      - "9092:9092"

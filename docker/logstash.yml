@@ -1,0 +1,24 @@
+version: '3.3'
+services:
+
+  # Logstash
+  logstash:
+    image: logstash:7.6.1
+    container_name: logstash
+    links:
+      - elasticsearch:elasticsearch
+    volumes:
+      - ./logstash/:/etc/logstash/conf.d/
+      - ./logs/SrfGroupElk.log:/tmp/logs/SrfGroupElk.log
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    ports:
+      - "5000:5000"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+# Network for app
+networks:
+  elk:
+    driver: bridge

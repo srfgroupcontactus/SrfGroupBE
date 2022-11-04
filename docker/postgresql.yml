@@ -1,0 +1,19 @@
+version: '3.3'
+services:
+
+  # PostgreSql
+  SERVICE_NAME_DB:
+    image: postgres:13.2
+    environment:
+      - POSTGRES_PASSWORD=azerty
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=d56mlvem6o8lh7
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - 127.0.0.1:5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

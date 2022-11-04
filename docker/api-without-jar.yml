@@ -1,0 +1,108 @@
+version: '3.3'
+services:
+
+  # PostgreSql
+  SERVICE_NAME_DB:
+    image: postgres:13.2
+    environment:
+      - POSTGRES_PASSWORD=azerty
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=d56mlvem6o8lh7
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - 127.0.0.1:5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.0
+    container_name: elasticsearch
+    # volumes:
+    #   - ~/volumes/jhipster/jhipster/elasticsearch/:/usr/share/elasticsearch/data/
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - 9200:9200
+    environment:
+      - 'xpack.security.enabled=false'
+      - 'discovery.type=single-node'
+      - 'bootstrap.memory_lock=true'
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+      - 'http.cors.allow-origin=*'
+      - 'http.cors.enabled=true'
+      - 'http.cors.allow-methods=OPTIONS, HEAD, GET, POST, PUT, DELETE'
+      - 'http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization,langKey,sourceConnectedDevice'
+      - 'http.cors.allow-credentials=true'
+      - 'http.host=0.0.0.0'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - elk
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.1.0
+    container_name: kibana
+    # volumes:
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  # APM Server
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:7.1.0
+    container_name: apm-server
+    cap_add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
+    cap_drop: ["ALL"]
+    depends_on:
+      - elasticsearch
+      - kibana
+    ports:
+      - 8200:8200
+    networks:
+      - elk
+    command: >
+      apm-server -e
+        -E apm-server.rum.enabled=true
+        -E setup.kibana.host=kibana:5601
+        -E setup.template.settings.index.number_of_replicas=0
+        -E apm-server.kibana.enabled=true
+        -E apm-server.kibana.host=kibana:5601
+        -E output.elasticsearch.hosts=["elasticsearch:9200"]
+    healthcheck:
+      interval: 10s
+      retries: 12
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:8200/
+
+
+  # Redis
+  Redis:
+    image: redis:7.0.4
+    ports:
+      - "6379:6379"
+    volumes:
+      - /srv/docker/redis:/var/lib/redis
+    restart: always
+
+
+# Network for app
+networks:
+  elk:
+    driver: bridge

@@ -1,0 +1,108 @@
+# SETTINGS
+PUT search_offers
+{
+  "settings": {
+    "max_shingle_diff" : 50,
+    "analysis": {
+      "analyzer": {
+        "suggestions": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["suggestions_shingle", "lowercase"]
+        }
+      },
+      "filter": {
+        "suggestions_shingle": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 50
+        }
+      }
+    }
+  }
+}
+
+
+# ANALYZER
+POST search_offers/_analyze
+{
+  "analyzer": "suggestions",
+  "text": "Telefon mobil Samsung S10"
+}
+
+
+# MAPPINGS
+POST search_offers/_mappings
+{
+  "properties": {
+    "title": {
+      "type": "text",
+      "fields": {
+        "suggestions": {
+          "type": "text",
+          "analyzer": "suggestions",
+          "fielddata": true
+        }
+      }
+    },
+	"description": {
+      "type": "text",
+      "fields": {
+        "suggestions": {
+          "type": "text",
+          "analyzer": "suggestions",
+          "fielddata": true
+        }
+      }
+    }
+  }
+}
+
+
+# DOCUMENTS
+POST search_offers/_doc
+{
+
+ "title": "title 0",
+ "description": "description 0"
+}
+
+POST search_offers/_doc
+{
+
+ "title": "title 1",
+ "description": "description 1"
+}
+
+
+POST search_offers/_doc
+{
+
+ "title": "title 2",
+ "description": "description 2"
+}
+
+
+# SEARCH
+GET search_offers/_search
+{
+	"size": 0,
+	"aggs":{
+		"title_suggestions":{
+			"terms":{
+				"field":"title.suggestions",
+				"include":"ti(.*)",
+				"size": 4
+			},
+			"aggs":{
+				"description_suggestions":{
+					"terms":{
+						"field":"description.suggestions",
+						"include":"des(.*)",
+						"size": 4
+					}
+				}
+			}
+		}
+	}
+}

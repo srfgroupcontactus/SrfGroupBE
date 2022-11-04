@@ -1,0 +1,64 @@
+# SETTINGS
+PUT movies
+{
+    "settings": {
+        "analysis": {
+            "filter": {
+                "autocomplete_filter": {
+                    "type": "edge_ngram",
+                    "min_gram": 1,
+                    "max_gram": 20
+                }
+            },
+            "analyzer": {
+                "autocomplete": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": ["autocomplete_filter", "lowercase"]
+                }
+            }
+        }
+    }
+}
+# GET movies/_analyze
+  {
+    "analyzer" : "autocomplete",
+    "text" : "St"
+  }
+
+*********************************************************
+
+# MAPPINGS
+
+POST movies/_mappings
+{
+  "properties": {
+    "title": {
+      "type": "text",
+      "analyzer" : "autocomplete"
+    }
+  }
+}
+
+
+*************************************************************
+# DOCUMENTS
+POST movies/_doc
+{
+
+ "title": "sta",
+ "description": "New movie"
+}
+
+**********************************************************
+
+#SEARCH
+
+GET movies/_search
+{
+  "query":{
+    "match":{
+      "title": "sta"
+    }
+  }
+}
